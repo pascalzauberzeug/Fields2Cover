@@ -56,7 +56,7 @@ extensions = [
 
 source_suffix = [".rst", ".md"]
 
-breathe_projects = {"Fields2Cover": "../build/docs/doc_doxygen/xml/index.xml"}
+breathe_projects = {"Fields2Cover": "../build/docs/doc_doxygen/xml"}
 breathe_default_project = "Fields2Cover"
 #breathe_default_members = ('members', 'undoc-members')
 exhale_args =  {
