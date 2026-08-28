@@ -28,19 +28,34 @@ if (DOXYGEN_FOUND)
     set(SPHINX_INDEX_FILE ${SPHINX_BUILD}/index.html)
 
 
+    set(SPHINX_COMMAND
+      ${SPHINX_EXECUTABLE} -b html
+        -Dbreathe_projects.Fields2Cover=${DOXYGEN_OUTPUT_DIR}
+        ${SPHINX_SOURCE} ${SPHINX_BUILD}
+    )
+    set(SPHINX_DEPENDS
+      # Other docs files you want to track should go here (or in some variable)
+      ${SPHINX_SOURCE}/index.rst
+      ${DOXYGEN_INDEX_FILE}
+    )
+    if(BUILD_PYTHON)
+      # Let autodoc import the freshly built python module on the Python API page.
+      set(SPHINX_COMMAND ${CMAKE_COMMAND} -E env
+        "F2C_PYTHON_DIR=$<TARGET_FILE_DIR:fields2cover_python>"
+        ${SPHINX_COMMAND}
+      )
+      list(APPEND SPHINX_DEPENDS fields2cover_python)
+    endif()
+
     add_custom_command(
       OUTPUT
         ${SPHINX_INDEX_FILE}
       COMMAND
-        ${SPHINX_EXECUTABLE} -b html
-          -Dbreathe_projects.Fields2Cover=${DOXYGEN_OUTPUT_DIR}
-          ${SPHINX_SOURCE} ${SPHINX_BUILD}
+        ${SPHINX_COMMAND}
       WORKING_DIRECTORY
         ${CMAKE_CURRENT_BINARY_DIR}
       DEPENDS
-        # Other docs files you want to track should go here (or in some variable)
-        ${SPHINX_SOURCE}/index.rst
-        ${DOXYGEN_INDEX_FILE}
+        ${SPHINX_DEPENDS}
       MAIN_DEPENDENCY
         ${SPHINX_SOURCE}/conf.py
       COMMENT

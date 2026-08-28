@@ -62,9 +62,85 @@ breathe_default_project = "Fields2Cover"
 exhale_args =  {
     "containmentFolder"    : "./api/",
     "rootFileName"         : "f2c_library.rst",
-    "rootFileTitle"        : "API",
+    "rootFileTitle"        : "C++ API",
     "doxygenStripFromPath" : ".."
 }
+
+# Make the SWIG-generated python module importable for autodoc on the
+# "Python API" pages. The docs CMake target sets this to the build tree;
+# set it manually when running sphinx-build by hand.
+f2c_python_dir = os.environ.get("F2C_PYTHON_DIR")
+if f2c_python_dir:
+    sys.path.insert(0, f2c_python_dir)
+
+
+def _write_python_api_pages():
+    """Generate one page per module of the python API into
+    source/python_api/, mirroring the structure of the C++ reference
+    (like exhale generates api/ for C++). Skipped when the SWIG module
+    is not importable."""
+    import shutil
+    gen_dir = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "source", "python_api")
+    shutil.rmtree(gen_dir, ignore_errors=True)
+    try:
+        import fields2cover as f2c
+    except ImportError:
+        return
+    import inspect
+
+    members = inspect.getmembers(f2c)
+    classes = [n for n, o in members
+               if inspect.isclass(o)
+               and not n.startswith("_") and n != "SwigPyIterator"]
+    functions = [n for n, o in members
+                 if inspect.isfunction(o) and not n.startswith("_")]
+    def in_group(name, prefix, extras=()):
+        return name.startswith(prefix) or name in extras
+
+    def is_container(name):
+        return (name.startswith(("Vector", "optional_"))
+                or name == "LongLongVector")
+
+    grouped = set()
+
+    def group(prefix, extras=()):
+        names = [n for n in classes if in_group(n, prefix, extras)]
+        grouped.update(names)
+        return names
+
+    groups = [
+        ("0_functions", "Functions", "function", functions),
+        ("2_objective_functions", "Objective functions", "class",
+         group("OBJ_", ("PPObjective", "RPObjective"))),
+        ("3_headland_generator", "Headland generator", "class",
+         group("HG_", ("HeadlandGeneratorBase",))),
+        ("4_swath_generator", "Swath generator", "class",
+         group("SG_", ("SwathGeneratorBase",))),
+        ("5_route_planning", "Route planning", "class", group("RP_")),
+        ("6_path_planning", "Path planning", "class", group("PP_")),
+        ("7_decomposition", "Decomposition", "class",
+         group("DECOMP_", ("DecompositionBase",))),
+        ("8_containers", "Containers", "class",
+         [n for n in classes if is_container(n)]),
+    ]
+    groups.insert(1, ("1_types", "Types", "class",
+                      [n for n in classes
+                       if n not in grouped and not is_container(n)]))
+
+    os.makedirs(gen_dir, exist_ok=True)
+    for filename, title, kind, names in groups:
+        if not names:
+            continue
+        with open(os.path.join(gen_dir, filename + ".rst"), "w") as page:
+            page.write(title + "\n" + "=" * len(title) + "\n")
+            for name in names:
+                page.write("\n.. auto{}:: fields2cover.{}\n".format(kind, name))
+                if kind == "class":
+                    page.write("   :members:\n   :undoc-members:\n")
+
+
+_write_python_api_pages()
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

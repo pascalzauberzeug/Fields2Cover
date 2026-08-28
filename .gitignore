@@ -37,6 +37,7 @@ build/
 .clangd/
 cmake-build-f2c-debug/
 docs/api
+docs/source/python_api/
 
 
 authorized_keys

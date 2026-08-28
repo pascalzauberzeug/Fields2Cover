@@ -81,7 +81,7 @@ jobs:
             -D CMAKE_C_COMPILER=gcc-${{ matrix.gcc }} \
             -D CMAKE_CXX_COMPILER=g++-${{ matrix.gcc }} \
             -DCMAKE_INSTALL_PREFIX:PATH=instdir  \
-            -DBUILD_PYTHON=OFF   \
+            -DBUILD_PYTHON=ON   \
             -DALLOW_PARALLELIZATION=ON  \
             -DBUILD_TUTORIALS=OFF \
             -DBUILD_TESTING=ON   \

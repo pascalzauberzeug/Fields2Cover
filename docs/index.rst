@@ -52,10 +52,11 @@ The source code is hosted on `GitHub <https://github.com/Fields2Cover/Fields2Cov
    source/faq.rst
 
 .. toctree::
-   :caption: Reference
+   :caption: API
    :maxdepth: 1
 
-   api/f2c_library.rst
+   C++ <api/f2c_library>
+   Python <source/python_api>
 
 .. toctree::
    :caption: Migration
