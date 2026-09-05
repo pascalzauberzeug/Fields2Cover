@@ -42,7 +42,7 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive
           apt-get update --allow-insecure-repositories -y
           apt-get install -y --allow-unauthenticated --no-install-recommends ca-certificates
-          apt-get install -y --allow-unauthenticated --no-install-recommends build-essential doxygen g++-${{ matrix.gcc }} gcc-${{ matrix.gcc }} gnuplot git lcov libboost-dev libeigen3-dev libgeos-dev libpython3-dev libtbb-dev python3 python3-matplotlib python3-pip python3-pytest python3-tk libtinyxml2-dev libtinyxml2-9 nlohmann-json3-dev
+          apt-get install -y --allow-unauthenticated --no-install-recommends build-essential ccache doxygen g++-${{ matrix.gcc }} gcc-${{ matrix.gcc }} gnuplot git lcov libboost-dev libeigen3-dev libgeos-dev libpython3-dev libtbb-dev python3 python3-matplotlib python3-pip python3-pytest python3-tk libtinyxml2-dev libtinyxml2-9 nlohmann-json3-dev
           python3 -m pip install gcovr
 
       - name: Solve issue with matplotlib
@@ -85,6 +85,15 @@ jobs:
           cp -r /tmp/ortools/lib/cmake/. /usr/share
           cp -r /tmp/ortools/share/. /usr/share/ortools
 
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2.24
+        with:
+          # ccache comes from apt above; the action only restores/saves the cache dir
+          install: "no"
+          key: ${{ matrix.gcc }}-${{ matrix.build_type }}-${{ matrix.shared }}-${{ matrix.swig }}
+          restore-keys: ${{ matrix.gcc }}-${{ matrix.build_type }}-${{ matrix.shared }}
+          max-size: "100M"
+
       - name: Configure
         working-directory: ${{github.workspace}}
         shell: bash
@@ -97,6 +106,8 @@ jobs:
             -G "${{matrix.generators}}" \
             -DCMAKE_C_COMPILER=gcc-${{ matrix.gcc }} \
             -DCMAKE_CXX_COMPILER=g++-${{ matrix.gcc }} \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_INSTALL_PREFIX:PATH=../instdir  \
             -DBUILD_PYTHON=ON   \
             -DALLOW_PARALLELIZATION=ON  \
@@ -110,6 +121,10 @@ jobs:
       - name: Build
         working-directory: ${{github.workspace}}/build
         run: make -j2
+
+      - name: ccache stats
+        if: always()
+        run: ccache -s
 
       - name: Install Strip
         working-directory: ${{github.workspace}}/build
@@ -136,7 +151,15 @@ jobs:
 
       - name: Homebrew dependencies
         run: |
-          brew install swig gdal geos or-tools tinyxml2 eigen tbb boost gnuplot googletest
+          brew install swig gdal geos or-tools tinyxml2 eigen tbb boost gnuplot googletest ccache
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2.24
+        with:
+          # ccache comes from Homebrew above; the action only restores/saves the cache dir
+          install: "no"
+          key: macos-15-appleclang-Release
+          max-size: "250M"
 
       - name: Configure
         run: |
@@ -144,11 +167,17 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_PYTHON=ON \
             -DBUILD_TESTING=ON \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_PREFIX_PATH="$(brew --prefix)" \
             -DPython_EXECUTABLE="$(command -v python3)"
 
       - name: Build
         run: cmake --build build -j3
+
+      - name: ccache stats
+        if: always()
+        run: ccache -s
 
       - name: Run C++ tests
         run: ctest --test-dir build/tests --output-on-failure
