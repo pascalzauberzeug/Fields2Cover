@@ -24,7 +24,7 @@ Some packages are needed before compiling the package:
            sudo apt-get install --no-install-recommends build-essential ca-certificates cmake \
                 doxygen g++ git libboost-dev libeigen3-dev libgdal-dev libpython3-dev python3 python3-pip \
                 python3-matplotlib python3-tk lcov libgtest-dev libtbb-dev swig libgeos-dev \
-                gnuplot libtinyxml2-dev nlohmann-json3-dev
+                gnuplot nlohmann-json3-dev
            python3 -m pip install gcovr
 
         Also, `OR-tools <https://developers.google.com/optimization>`__ for C++ is needed.
@@ -34,7 +34,11 @@ Some packages are needed before compiling the package:
 
         .. code-block:: console
 
-           brew install cmake swig gdal geos or-tools tinyxml2 eigen tbb boost gnuplot googletest
+           brew install cmake swig gdal geos or-tools eigen tbb boost gnuplot googletest
+
+.. note::
+   tinyxml2 is fetched and linked statically at build time, so it does not
+   have to be installed.
 
 
 C++

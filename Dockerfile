@@ -49,7 +49,6 @@ RUN apt-get install -y --allow-unauthenticated --no-install-recommends \
                     python3-tk \
                     ranger \
                     vim \
-                    libtinyxml2-dev \
                     nlohmann-json3-dev \
                     curl
 #                    && \

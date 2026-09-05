@@ -92,6 +92,21 @@ function(f2c_declare_dependencies)
     endif(NOT ortools_FOUND)
   endif()
 
+  # tinyxml2 is a tiny private dependency. Vendoring it as a static library
+  # drops one preinstall requirement and one runtime shared library on every
+  # platform; it is linked into libFields2Cover, so nothing has to be shipped
+  # alongside it.
+  set(F2C_SAVED_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+  set(BUILD_SHARED_LIBS OFF)
+  set(tinyxml2_BUILD_TESTING OFF)
+  FetchContent_Declare(tinyxml2 FETCHCONTENT_UPDATES_DISCONNECTED
+    GIT_REPOSITORY https://github.com/leethomason/tinyxml2.git
+    GIT_TAG 10.0.0
+    GIT_SHALLOW TRUE
+  )
+  FetchContent_MakeAvailable(tinyxml2)
+  set(BUILD_SHARED_LIBS ${F2C_SAVED_BUILD_SHARED_LIBS})
+
   FetchContent_Declare(steering_functions FETCHCONTENT_UPDATES_DISCONNECTED
     GIT_REPOSITORY https://github.com/Fields2Cover/steering_functions.git
     GIT_TAG 13e3f5658144b3832fb1eb31a0e2f5a3cbf57db9

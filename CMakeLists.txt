@@ -14,6 +14,10 @@ option(ALLOW_PARALLELIZATION "Allow parallel algorithms" ON)
 option(BUILD_TUTORIALS "Build tutorials" ON)
 option(BUILD_PYTHON "Build Python SWIG module" ON)
 option(BUILD_DOC "Build Documentation" OFF)
+# Declared here so that a vendored dependency's include(CTest) cannot flip it
+# on behind our back and pull Fields2Cover's own GTest-based tests into a
+# build that did not ask for them.
+option(BUILD_TESTING "Build the tests" OFF)
 option(BUILD_SHARED_LIBS "Build shared library(.so)" ON)
 option(USE_ORTOOLS_RELEASE "Get or-tools from release tarball" OFF)
 option(USE_ORTOOLS_FETCH_SRC "Get or-tools from source" OFF)
@@ -46,7 +50,6 @@ list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 
 
 # Dependencies
-find_package(TinyXML2 REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Gnuplot)
 find_package(GDAL 3.0 REQUIRED)
@@ -96,7 +99,7 @@ target_link_libraries(Fields2Cover
   PRIVATE
     ortools::ortools
     nlohmann_json::nlohmann_json
-    tinyxml2::tinyxml2
+    tinyxml2
     steering_functions
     matplot
 )
@@ -124,7 +127,7 @@ f2c_set_compiler_options(Fields2Cover)
 include(GNUInstallDirs)
 set(F2C_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/Fields2Cover)
 
-install(TARGETS Fields2Cover steering_functions matplot
+install(TARGETS Fields2Cover steering_functions matplot tinyxml2
   EXPORT Fields2CoverTargets
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
