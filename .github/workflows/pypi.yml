@@ -76,10 +76,51 @@ jobs:
           /tmp/venv/bin/python -c "import fields2cover as f2c; print(f2c.__version__)"
           /tmp/venv/bin/python -m pytest tests/python -q
 
+  wheel-linux:
+    name: Build linux wheel (${{ matrix.arch }}, python ${{ matrix.python }})
+    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, aarch64]
+        python: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build and repair the wheel
+        run: |
+          docker run --rm -v "$PWD":/work -w /work osgeo/gdal:ubuntu-small-3.6.3 \
+            bash ci/build_wheel_linux.sh "${{ matrix.python }}"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheel-linux-${{ matrix.arch }}-py${{ matrix.python }}
+          path: dist/*.whl
+
+  test-wheel-linux:
+    name: Install wheel without system deps (${{ matrix.arch }}, python ${{ matrix.python }})
+    needs: wheel-linux
+    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, aarch64]
+        python: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: wheel-linux-${{ matrix.arch }}-py${{ matrix.python }}
+          path: dist
+      # python:X-slim has none of GDAL, GEOS, or-tools, TBB or tinyxml2, so this
+      # only passes if the wheel really carries its whole dependency closure.
+      - name: Install into a bare python image and run the tests
+        run: |
+          docker run --rm -v "$PWD":/work -w /work "python:${{ matrix.python }}-slim" \
+            bash ci/test_wheel_clean.sh dist/*.whl
+
   publish-testpypi:
     name: Publish to TestPyPI
     if: github.event_name == 'workflow_dispatch' && inputs.target == 'testpypi'
-    needs: [sdist, test-sdist, test-sdist-macos]
+    needs: [sdist, test-sdist, test-sdist-macos, wheel-linux, test-wheel-linux]
     runs-on: ubuntu-latest
     environment: testpypi
     permissions:
@@ -98,7 +139,7 @@ jobs:
   publish-pypi:
     name: Publish to PyPI
     if: github.event_name == 'release'
-    needs: [sdist, test-sdist, test-sdist-macos]
+    needs: [sdist, test-sdist, test-sdist-macos, wheel-linux, test-wheel-linux]
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
