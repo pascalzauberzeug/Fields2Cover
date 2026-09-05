@@ -13,20 +13,25 @@ jobs:
     container: "osgeo/gdal:ubuntu-full-${{ matrix.gdal }}"
     strategy:
       fail-fast: false
+      # Compilers and SWIG versions are tested independently, not crossed:
+      # every gcc in Debug and Release with one SWIG, every SWIG once with
+      # the newest gcc in Release. Cross-testing them all was 65 jobs.
       matrix:
         gcc: [9, 10, 11, 12]
         gdal: ["3.6.3"]
-        swig: ["v4.0.0", "v4.0.1", "v4.0.2", "v4.1.0", "v4.1.1", "v4.2.0", "v4.2.1", "v4.5.0"]
+        swig: ["v4.2.1"]
         shared: ["ON"]
         generators: ["Unix Makefiles"]
         build_type: ["Debug", "Release"]
         include:
-          - gcc: 12
-            gdal: "3.6.2"
-            swig: "v4.2.1"
-            shared: "OFF"
-            generators: "Unix Makefiles"
-            build_type: "Release"
+          - {gcc: 12, gdal: "3.6.3", swig: "v4.0.0", shared: "ON", generators: "Unix Makefiles", build_type: "Release"}
+          - {gcc: 12, gdal: "3.6.3", swig: "v4.0.1", shared: "ON", generators: "Unix Makefiles", build_type: "Release"}
+          - {gcc: 12, gdal: "3.6.3", swig: "v4.0.2", shared: "ON", generators: "Unix Makefiles", build_type: "Release"}
+          - {gcc: 12, gdal: "3.6.3", swig: "v4.1.0", shared: "ON", generators: "Unix Makefiles", build_type: "Release"}
+          - {gcc: 12, gdal: "3.6.3", swig: "v4.1.1", shared: "ON", generators: "Unix Makefiles", build_type: "Release"}
+          - {gcc: 12, gdal: "3.6.3", swig: "v4.2.0", shared: "ON", generators: "Unix Makefiles", build_type: "Release"}
+          - {gcc: 12, gdal: "3.6.3", swig: "v4.5.0", shared: "ON", generators: "Unix Makefiles", build_type: "Release"}
+          - {gcc: 12, gdal: "3.6.2", swig: "v4.2.1", shared: "OFF", generators: "Unix Makefiles", build_type: "Release"}
 
     steps:
       - uses: actions/checkout@v4
@@ -103,7 +108,7 @@ jobs:
             -DBUILD_TUTORIALS=OFF \
             -DBUILD_TESTING=ON   \
             -DBUILD_DOC=OFF \
-            -DBUILD_SHARED_LIBS={{ matrix.shared }} \
+            -DBUILD_SHARED_LIBS=${{ matrix.shared }} \
             -DUSE_ORTOOLS_RELEASE=ON \
             ..
 
