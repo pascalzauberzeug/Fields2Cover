@@ -18,6 +18,7 @@ option(BUILD_SHARED_LIBS "Build shared library(.so)" ON)
 option(USE_ORTOOLS_RELEASE "Get or-tools from release tarball" OFF)
 option(USE_ORTOOLS_FETCH_SRC "Get or-tools from source" OFF)
 option(USE_ORTOOLS_VENDOR "Get or-tools from ortools_vendor" OFF)
+option(F2C_BUNDLE_GDAL_DATA "Install GDAL/PROJ runtime data into the python package (self-contained wheels)" OFF)
 
 
 # Set C++ standard

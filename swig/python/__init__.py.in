@@ -1,5 +1,17 @@
 """Fields2Cover: coverage path planning for autonomous agricultural vehicles."""
 
+import os as _os
+
 __version__ = "@PROJECT_VERSION@"
 
-from .fields2cover import *  # noqa: F401,F403
+# Self-contained wheels ship GDAL's and PROJ's runtime data inside the package
+# (see F2C_BUNDLE_GDAL_DATA). Point the libraries at it before the extension
+# loads them; a value already set in the environment always wins.
+_data = _os.path.join(_os.path.dirname(__file__), "data")
+if _os.path.isdir(_os.path.join(_data, "gdal")):
+    _os.environ.setdefault("GDAL_DATA", _os.path.join(_data, "gdal"))
+if _os.path.isdir(_os.path.join(_data, "proj")):
+    _os.environ.setdefault("PROJ_DATA", _os.path.join(_data, "proj"))  # PROJ >= 9.1
+    _os.environ.setdefault("PROJ_LIB", _os.path.join(_data, "proj"))  # PROJ < 9.1
+
+from .fields2cover import *  # noqa: E402,F401,F403

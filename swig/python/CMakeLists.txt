@@ -62,3 +62,44 @@ install(FILES
   DESTINATION ${F2C_PYTHON_INSTALL_DIR}
   COMPONENT python
 )
+
+if(F2C_BUNDLE_GDAL_DATA)
+  # Self-contained wheels carry GDAL's and PROJ's runtime data, because the
+  # target machine has no system GDAL/PROJ to take them from. __init__.py points
+  # GDAL_DATA/PROJ_DATA at these directories when they exist.
+  if(NOT F2C_GDAL_DATA_DIR)
+    execute_process(COMMAND gdal-config --datadir
+      OUTPUT_VARIABLE F2C_GDAL_DATA_DIR OUTPUT_STRIP_TRAILING_WHITESPACE
+      ERROR_QUIET)
+  endif()
+  if(NOT F2C_GDAL_DATA_DIR OR NOT EXISTS "${F2C_GDAL_DATA_DIR}")
+    message(FATAL_ERROR "F2C_BUNDLE_GDAL_DATA is ON but the GDAL data directory "
+                        "was not found; pass -DF2C_GDAL_DATA_DIR=<dir>")
+  endif()
+
+  if(NOT F2C_PROJ_DATA_DIR)
+    find_path(F2C_PROJ_DATA_DIR proj.db
+      HINTS ENV PROJ_DATA ENV PROJ_LIB
+      PATHS /usr/local/share/proj /usr/share/proj /usr/share/proj-data
+      NO_DEFAULT_PATH)
+  endif()
+  if(NOT F2C_PROJ_DATA_DIR)
+    message(FATAL_ERROR "F2C_BUNDLE_GDAL_DATA is ON but proj.db was not found; "
+                        "pass -DF2C_PROJ_DATA_DIR=<dir>")
+  endif()
+  message(STATUS "Bundling GDAL data from ${F2C_GDAL_DATA_DIR}")
+  message(STATUS "Bundling PROJ data from ${F2C_PROJ_DATA_DIR}")
+
+  install(DIRECTORY "${F2C_GDAL_DATA_DIR}/"
+    DESTINATION ${F2C_PYTHON_INSTALL_DIR}/data/gdal
+    COMPONENT python
+  )
+  # Only the database and its configuration: the optional grid-shift files
+  # (*.gsb, *.gtx, *.tif) add tens of megabytes and PROJ downloads the ones it
+  # needs from the PROJ CDN when a transformation actually requires them.
+  install(DIRECTORY "${F2C_PROJ_DATA_DIR}/"
+    DESTINATION ${F2C_PYTHON_INSTALL_DIR}/data/proj
+    COMPONENT python
+    FILES_MATCHING PATTERN "proj.db" PATTERN "proj.ini" PATTERN "*.json"
+  )
+endif()
