@@ -16,6 +16,9 @@ jobs:
       # Compilers and SWIG versions are tested independently, not crossed:
       # every gcc in Debug and Release with one SWIG, every SWIG once with
       # the newest gcc in Release. Cross-testing them all was 65 jobs.
+      # A static build (BUILD_SHARED_LIBS=OFF) cannot install the CMake export
+      # set (see CMakeLists.txt), so it is only exercised by the pip install
+      # job below, which is how wheels are built.
       matrix:
         gcc: [9, 10, 11, 12]
         gdal: ["3.6.3"]
@@ -31,7 +34,6 @@ jobs:
           - {gcc: 12, gdal: "3.6.3", swig: "v4.1.1", shared: "ON", generators: "Unix Makefiles", build_type: "Release"}
           - {gcc: 12, gdal: "3.6.3", swig: "v4.2.0", shared: "ON", generators: "Unix Makefiles", build_type: "Release"}
           - {gcc: 12, gdal: "3.6.3", swig: "v4.5.0", shared: "ON", generators: "Unix Makefiles", build_type: "Release"}
-          - {gcc: 12, gdal: "3.6.2", swig: "v4.2.1", shared: "OFF", generators: "Unix Makefiles", build_type: "Release"}
 
     steps:
       - uses: actions/checkout@v4
