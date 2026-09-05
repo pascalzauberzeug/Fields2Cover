@@ -112,9 +112,11 @@ Python for the same field: `819.4157957022983`.
 
 ### 2.4 Capability probe
 
-`ci/r_probe.R` exercises 31 aspects of the API. Against the *unmodified*
-interface it scored **19 ok / 6 failed**; with the fixes in this branch it scores
-**31 ok / 0 failed**. The six original failures:
+`ci/r_probe.R` exercises the API point by point. An earlier version of it, run
+against the *unmodified* interface, scored **19 ok / 6 failed**; the version in
+this branch, run against the fixed build, scores **31 ok / 0 failed** (it also
+covers more ground, having been extended as each defect was understood). The six
+original failures:
 
 **a) Scoped enums are broken (upstream SWIG bug).** For `enum class`, SWIG's
 `defineEnumeration()` table references a wrapper name it never registers:
