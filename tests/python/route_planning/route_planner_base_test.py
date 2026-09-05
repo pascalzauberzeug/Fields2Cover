@@ -48,14 +48,8 @@ def test_fields2cover_route_planner_base_simple_example():
 
   path_dubins = path_planner.planPath(robot, route, dubins)
 
-  f2c.Visualizer.figure();
-  f2c.Visualizer.plot(cells);
-  f2c.Visualizer.plot(no_hl);
-  f2c.Visualizer.plot(hl_swaths[1]);
-  f2c.Visualizer.plot(path_dubins);
-  f2c.Visualizer.show();
-
-
-
-
-
+  assert not route.isEmpty()
+  assert route.sizeVectorSwaths() > 1
+  assert route.sizeVectorSwaths() == route.sizeConnections()
+  assert path_dubins.size() > 0
+  assert path_dubins.length() > route.length()  # turns are longer than the straight connections
