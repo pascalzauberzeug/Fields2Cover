@@ -13,6 +13,7 @@ project(Fields2Cover
 option(ALLOW_PARALLELIZATION "Allow parallel algorithms" ON)
 option(BUILD_TUTORIALS "Build tutorials" ON)
 option(BUILD_PYTHON "Build Python SWIG module" ON)
+option(BUILD_R "Build R SWIG module (prototype)" OFF)
 option(BUILD_DOC "Build Documentation" OFF)
 option(BUILD_SHARED_LIBS "Build shared library(.so)" ON)
 option(USE_ORTOOLS_RELEASE "Get or-tools from release tarball" OFF)
@@ -179,9 +180,9 @@ endif(BUILD_TUTORIALS)
 ######################### swig ######################
 #####################################################
 
-if (BUILD_PYTHON)
+if (BUILD_PYTHON OR BUILD_R)
   add_subdirectory(swig)
-endif(BUILD_PYTHON)
+endif()
 
 #####################################################
 ######################### test ######################

@@ -12,6 +12,10 @@
  %include <exception.i>
  %include <std_pair.i>
 
+#if defined(SWIGR)
+%include "r/typemaps.i"
+#endif
+
 %inline %{
   #include "fields2cover.h"
 %}
@@ -156,12 +160,16 @@ EXTEND_OPERATOR(Cells)
 %template(optional_double) std::optional<double>;
 %template(optional_Point) std::optional<f2c::types::Point>;
 
-%template(VectorDouble) std::vector<double>;
-%template(VectorInt) std::vector<int>;
 %inline %{
 typedef long unsigned int size_t;
 %}
+#if !defined(SWIGR)
+// R's std_vector.i maps std::vector of primitives to native atomic vectors;
+// instantiating wrapper classes for them yields broken constructors.
+%template(VectorDouble) std::vector<double>;
+%template(VectorInt) std::vector<int>;
 %template(VectorSize) std::vector<size_t>;
+#endif
 %template(VectorPoint) std::vector<F2CPoint>;
 %template(VectorMultiPoint) std::vector<F2CMultiPoint>;
 %template(VectorSwath) std::vector<f2c::types::Swath>;
@@ -321,11 +329,13 @@ DEFINE_PP_COSTS(BaseObjective<f2c::obj::PPObjective>, computeCostWithMinimizingS
 %rename(RP_CustomOrder) f2c::rp::CustomOrder;
 %include "fields2cover/route_planning/custom_order.h"
 
+#if !defined(SWIGR)
 // Wrap std::vector<long long int> and let SWIG handle the destructor
 %feature("destructor", "delete") std::vector<long long int>;
 
 // Explicitly wrap the std::vector<long long int> type
 %template(LongLongVector) std::vector<long long int>;
+#endif
 
 
 // %ignore f2c::rp::RoutePlannerBase::createShortestGraph;
@@ -351,4 +361,10 @@ DEFINE_PP("fields2cover/path_planning/reeds_shepp_curves_hc.h", ReedsSheppCurves
 
 %include "fields2cover.h"
 
+#if defined(SWIGPYTHON)
 %include "python/Fields2Cover.i"
+#elif defined(SWIGR)
+%include "r/Fields2Cover.i"
+#else
+%include "magic_methods.i"
+#endif

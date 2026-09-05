@@ -38,3 +38,7 @@ include(${SWIG_USE_FILE})
 if(BUILD_PYTHON)
   add_subdirectory(python)
 endif()
+
+if(BUILD_R)
+  add_subdirectory(r)
+endif()
