@@ -14,7 +14,7 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update --allow-insecure-repositories -y
 apt-get install -y --allow-unauthenticated --no-install-recommends \
   ca-certificates build-essential git wget \
-  libboost-dev libeigen3-dev libgeos-dev libtbb-dev nlohmann-json3-dev \
+  libboost-dev libeigen3-dev libgeos-dev nlohmann-json3-dev \
   python3 python3-dev python3-pip python3-venv
 
 # or-tools release tarball, same version as cmake/F2CUtils.cmake

@@ -105,15 +105,34 @@ target_link_libraries(Fields2Cover
 )
 
 if(ALLOW_PARALLELIZATION)
-  # Prefer the imported target from oneTBB's CMake config; fall back to the
-  # bare library name for distros that don't ship the config.
+  # Prefer the imported target from oneTBB's CMake config. If oneTBB is not
+  # installed, vendor it as a static library instead of guessing a bare -ltbb:
+  # that drops a preinstall requirement and leaves no runtime shared library.
   find_package(TBB CONFIG QUIET)
   set(F2C_TBB_FROM_CONFIG ${TBB_FOUND})  # consumed by Fields2CoverConfig.cmake.in
-  if(TBB_FOUND)
-    target_link_libraries(Fields2Cover PRIVATE TBB::tbb)
-  else()
-    target_link_libraries(Fields2Cover PRIVATE tbb)
+  if(NOT TBB_FOUND)
+    message(STATUS "oneTBB -- not found, building it from source as a static library")
+    include(FetchContent)
+    set(F2C_SAVED_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+    set(BUILD_SHARED_LIBS OFF)
+    # oneTBB still declares cmake_minimum_required(VERSION 3.5), so CMP0077 is
+    # OLD inside it and its option() calls ignore plain variables. These have
+    # to be cache entries to take effect -- without them oneTBB builds its
+    # whole test suite.
+    set(TBB_TEST OFF CACHE BOOL "" FORCE)
+    set(TBB_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(TBB_STRICT OFF CACHE BOOL "" FORCE)
+    set(TBBMALLOC_BUILD OFF CACHE BOOL "" FORCE)  # only TBB::tbb is used
+    FetchContent_Declare(tbb FETCHCONTENT_UPDATES_DISCONNECTED
+      GIT_REPOSITORY https://github.com/uxlfoundation/oneTBB.git
+      GIT_TAG v2022.0.0
+      GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(tbb)
+    set(BUILD_SHARED_LIBS ${F2C_SAVED_BUILD_SHARED_LIBS})
+    set(F2C_TBB_VENDORED TRUE)
   endif()
+  target_link_libraries(Fields2Cover PRIVATE TBB::tbb)
 endif(ALLOW_PARALLELIZATION)
 
 
@@ -127,7 +146,14 @@ f2c_set_compiler_options(Fields2Cover)
 include(GNUInstallDirs)
 set(F2C_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/Fields2Cover)
 
-install(TARGETS Fields2Cover steering_functions matplot tinyxml2
+# Vendored static private dependencies have to travel in the export set so
+# that Fields2CoverTargets.cmake can resolve them for C++ consumers.
+set(F2C_VENDORED_TARGETS steering_functions matplot tinyxml2)
+if(F2C_TBB_VENDORED)
+  list(APPEND F2C_VENDORED_TARGETS tbb)
+endif()
+
+install(TARGETS Fields2Cover ${F2C_VENDORED_TARGETS}
   EXPORT Fields2CoverTargets
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

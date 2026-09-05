@@ -42,11 +42,11 @@ Fields2Cover builds on GDAL, GEOS and OR-tools, which need to be installed first
 ```bash
 # Ubuntu
 sudo apt install build-essential libgdal-dev libgeos-dev libeigen3-dev libboost-dev \
-     libtbb-dev nlohmann-json3-dev libpython3-dev gnuplot
+     nlohmann-json3-dev libpython3-dev gnuplot
 # plus OR-tools for C++: https://developers.google.com/optimization/install/cpp
 
 # macOS
-brew install gdal geos or-tools eigen tbb boost gnuplot
+brew install gdal geos or-tools eigen boost gnuplot
 ```
 
 ### C++
