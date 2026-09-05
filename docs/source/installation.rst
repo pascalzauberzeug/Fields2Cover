@@ -41,6 +41,12 @@ Some packages are needed before compiling the package:
    have to be installed. oneTBB is used when it is installed and is otherwise
    built from source as a static library, so it is optional too.
 
+.. note::
+   OR-tools can also be built from source instead of being installed, with
+   ``cmake -DUSE_ORTOOLS_FETCH_SRC=ON``. It is then linked statically and the
+   result needs no OR-tools shared library at runtime, at the cost of a
+   considerably longer build (tens of minutes).
+
 
 C++
 ^^^

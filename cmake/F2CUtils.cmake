@@ -14,12 +14,37 @@ function(f2c_declare_dependencies)
 
   set(ORTOOLS_TARGET "")
   if(USE_ORTOOLS_FETCH_SRC)
-    message(STATUS "or-tools -- Downloading and building from source")
+    message(STATUS "or-tools -- Downloading and building from source (static)")
+    # Static, so nothing of or-tools has to be installed next to Fields2Cover
+    # or found at runtime. Fields2Cover only uses the routing library
+    # (ortools/constraint_solver), so the samples, the other language
+    # bindings, flatzinc, MathOpt and the extra MIP/LP backends are dead
+    # weight here. USE_GUROBI/USE_XPRESS stay at their defaults: or-tools
+    # compiles those interfaces unconditionally and only dlopen()s the
+    # solvers, so turning them off breaks the link instead of slimming it.
+    set(F2C_SAVED_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+    set(BUILD_SHARED_LIBS OFF)
+    set(BUILD_DEPS ON)
+    set(BUILD_SAMPLES OFF)
+    set(BUILD_EXAMPLES OFF)
+    set(BUILD_FLATZINC OFF)
+    set(BUILD_MATH_OPT OFF)
+    set(BUILD_TESTING OFF)
+    set(BUILD_DOC OFF)
+    set(BUILD_PYTHON OFF)   # or-tools' own option, not Fields2Cover's
+    set(BUILD_JAVA OFF)
+    set(BUILD_DOTNET OFF)
+    set(USE_SCIP OFF)
+    set(USE_GLPK OFF)
+    set(USE_HIGHS OFF)
+    set(USE_COINOR OFF)
+    set(USE_PDLP OFF)
     FetchContent_Declare(ortools
       GIT_REPOSITORY https://github.com/google/or-tools.git
       GIT_TAG v9.9
     )
     FetchContent_MakeAvailable(ortools)
+    set(BUILD_SHARED_LIBS ${F2C_SAVED_BUILD_SHARED_LIBS})
     set(ORTOOLS_TARGET "ortools")
   elseif(USE_ORTOOLS_VENDOR)
     find_package(ortools_vendor REQUIRED)
@@ -79,15 +104,23 @@ function(f2c_declare_dependencies)
         message(FATAL_ERROR "Failed to find ortools in release tarball")
       endif()
 
-      #NOTE: in CMAKE 3.21 introduces IMPORTED_RUNTIME_ARTIFACTS
-      # https://cmake.org/cmake/help/v3.21/command/install.html#imported-runtime-artifacts
-      # Which would allow creation of an ortools target with IMPORTED_LOCATION
-      # and then install with IMPORTED_RUNTIME_ARTIFACTS
-      # Just brute force install the contents of the directories for now.
+      # libortools.so is the only piece of the tarball that is needed at
+      # runtime: the release ships absl, protobuf, re2, Coin-OR and SCIP as
+      # static archives that are already linked into it, and or-tools is a
+      # private dependency, so its headers and CMake config are not part of
+      # the Fields2Cover install interface either. Copying the whole tarball
+      # (bin, include, share, examples, ~100 archives) into the install prefix
+      # added hundreds of megabytes for no benefit.
+      #NOTE: CMake 3.21 introduces IMPORTED_RUNTIME_ARTIFACTS, which would let
+      # us install the imported ortools::ortools target directly.
       include(GNUInstallDirs)
       install(
-        DIRECTORY "${ortools_SOURCE_DIR}/"
-        DESTINATION ${CMAKE_INSTALL_PREFIX} #opt/f2c_ortools/
+        DIRECTORY "${ortools_SOURCE_DIR}/lib/"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        FILES_MATCHING
+          PATTERN "libortools.so*"
+          PATTERN "cmake" EXCLUDE
+          PATTERN "pkgconfig" EXCLUDE
       )
     endif(NOT ortools_FOUND)
   endif()
